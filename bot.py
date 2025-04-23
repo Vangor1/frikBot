@@ -24,12 +24,12 @@ def main():
         delay=(remind_time-datetime.now()).total_seconds()
         if delay<0:
             delay=0
-    application.job_queue.run_once(
-        send_reminder,
-        when=delay,
-        chat_id=chat_id,
-        data={'message': message, 'reminder_id':rem_id}
-    )
+        application.job_queue.run_once(
+            send_reminder,
+            when=delay,
+            chat_id=chat_id,
+            data={'message': message, 'reminder_id':rem_id}
+        )
     application.run_polling()
 
 if __name__ == '__main__':
