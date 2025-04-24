@@ -1,7 +1,11 @@
 import sqlite3
 from datetime import datetime
+import os
 
-DB_PATH = 'reminders.db'
+
+#DB_PATH = 'reminders.db'
+BASE_DIR=os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, '..', 'reminders.db')
 
 def init_db():
     """
