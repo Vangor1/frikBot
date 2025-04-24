@@ -34,7 +34,7 @@ def add_reminder(chat_id: int, remind_time:datetime, message:str)->int:
     cursor=conn.cursor()
     cursor.execute("""
     INSERT INTO reminders(
-                   chat_id, remind_rime, message)
+                   chat_id, remind_time, message)
                    VALUES (?,?,?)""", (chat_id, remind_time.isoformat(), message)
                    )
     reminder_id =cursor.lastrowid
