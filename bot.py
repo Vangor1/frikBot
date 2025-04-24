@@ -2,10 +2,10 @@ import logging
 from datetime import datetime
 from handlers.start import start
 from handlers.schedule import (schedule, send_reminder)
-from telegram import Update
+from handlers.list import list_reminders
+from handlers.cancel import cancel
 import db
-from telegram.ext import (CommandHandler, ApplicationBuilder) 
-from apscheduler.schedulers.background import BackgroundScheduler
+from telegram.ext import (CommandHandler, ApplicationBuilder)
 from config import BOT_TOKEN
 
 logging.basicConfig(
@@ -14,16 +14,20 @@ logging.basicConfig(
 logger=logging.getLogger(__name__)
 
 def main():
+    #Инициализация бд
     db.init_db()
-
+    #Псотройка приложения и регистрация команд
     application = ApplicationBuilder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("schedule", schedule))
-
+    application.add_handler(CommandHandler("list", list_reminders))
+    application.add_handler(CommandHandler("cancel", cancel))
+    #При старте подгружаются все отложенные задачи
     for rem_id, chat_id, remind_time, message in db.get_pending_reminders():
+        #Вычисляется задержка до момента времени напоминание (remind_time)
         delay=(remind_time-datetime.now()).total_seconds()
         if delay<0:
-            delay=0
+            delay=0 #Если время прошло - отправить сразу
         application.job_queue.run_once(
             send_reminder,
             when=delay,

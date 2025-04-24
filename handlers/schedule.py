@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import (datetime, timedelta)
 from telegram import Update
 from telegram.ext import ContextTypes
 import db
@@ -12,8 +12,8 @@ async def schedule (update: Update, context: ContextTypes.DEFAULT_TYPE):
     Сохраняет напоминание в БД и ставит в очередь
     """
     try:
-        #парсинг времени и текста
-        time_str = context.args[0]
+        #парсинг времени и текст
+        time_str = context.args[0]#"HH:MM"
         message_text = " ".join(context.args[1:])
         remind_time = datetime.strptime(time_str, "%H:%M").time()
     except(IndexError, ValueError):
@@ -51,11 +51,12 @@ async def send_reminder(context:ContextTypes.DEFAULT_TYPE):
     chat_id = job.chat_id
     message_text = job.data.get('message')
     remind_id = job.data.get('reminder_id')
-    try:
+    try:#Отправка пользователю текст напоминания
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f"Напоминание:{message_text}"
+            text=f"Напоминание: {message_text}"
         )
+        #Удаление записи из бд чтоб повторно не сработало
         if remind_id is not None:
             db.delete_reminder(remind_id)
     except Exception as e:
