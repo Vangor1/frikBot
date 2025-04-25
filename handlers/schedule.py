@@ -1,10 +1,43 @@
 import logging
-from datetime import (datetime, timedelta)
+from datetime import (datetime, timedelta,)
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import (ContextTypes, ConversationHandler,
+                          MessageHandler, CommandHandler,
+                          filters,)
 import db
 
 logger = logging.getLogger(__name__)
+#Переменная состояния разговора
+WAIT_INPUT=1
+
+async def schedule_start(update: Update, context: ContextTypes.DEFAULT_TYPE)->int:
+    """
+    Точка входа ConversationHandler для /schedule
+    Запрашиваем время и текст
+    """
+    await update.message.reply_text(
+        'Пожалуйста, введите время и текст напоминания в форме: \n'
+        'ЧЧ:ММ Текст\n'
+        'Или /cancel для отмены'
+    )
+    return WAIT_INPUT
+async def schedule_input(update: Update, context: ContextTypes.DEFAULT_TYPE)->int:
+    """
+    Получаем строку и пытаемся распарсарсить.
+    Если всё ок сейвим и планируем, иначе просим повторить
+    """
+    text = update.message.text.strip()
+    if ' ' not in text:
+        await update.message.reply_text('Неправильно, попробуй ещё раз.')
+        return WAIT_INPUT
+    time_str, message_text = text.split(' ', 1)
+    try:
+        remind_time = datetime.strptime(time_str, "%H:%M").time()
+    except(IndexError, ValueError):
+        await update.message.reply_text(
+            "Неправильно, попробуй ещё раз."
+        )
+        return WAIT_INPUT     
 
 async def schedule (update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
