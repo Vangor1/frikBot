@@ -1,5 +1,5 @@
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import (ContextTypes, ConversationHandler)
 import db
 
 async def cancel(update:Update, context:ContextTypes.DEFAULT_TYPE):
@@ -30,4 +30,13 @@ async def cancel(update:Update, context:ContextTypes.DEFAULT_TYPE):
         job.schedule_removal()
     db.delete_reminder(rem_id)
     await update.message.reply_text(f'Напоминание {rem_id} отменено')
+
+async def dialogue_cancel (update: Update, context: ContextTypes.DEFAULT_TYPE)->int:
+    """
+    /cancel - внутри диалога прерывает диалог
+    """
+    await update.message.reply_text(
+        f"Установка напоминания отменена"
+    )
+    return ConversationHandler.END
     

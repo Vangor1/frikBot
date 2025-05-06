@@ -1,13 +1,14 @@
 import logging
 from datetime import datetime
 from handlers.start import start
-from handlers.schedule import (schedule, send_reminder)
+from handlers.schedule import (send_reminder, schedule_start,
+                               schedule_input, WAIT_INPUT)
 from handlers.list import list_reminders
-from handlers.cancel import cancel
+from handlers.cancel import cancel, dialogue_cancel
 import db
 from telegram import BotCommand
-from telegram.ext import (CommandHandler, ApplicationBuilder,
-                          Application)
+from telegram.ext import (CommandHandler, ApplicationBuilder, filters,
+                          Application, ConversationHandler, MessageHandler)
 from config import BOT_TOKEN
 
 logging.basicConfig(
@@ -29,9 +30,13 @@ def main():
     #Инициализация бд
     db.init_db()
     #Псотройка приложения и регистрация команд
-    application = ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
+    application = (ApplicationBuilder().token(BOT_TOKEN)
+                   .post_init(set_bot_commands).build())
+    conv_handler = ConversationHandler(entry_points=[CommandHandler('schedule', schedule_start)],
+                                       states={WAIT_INPUT:[MessageHandler(filters.TEXT & ~filters.COMMAND, schedule_input)],},
+                                       fallbacks=[CommandHandler('cancel',dialogue_cancel)])
+    application.add_handler(conv_handler)
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("schedule", schedule))
     application.add_handler(CommandHandler("list", list_reminders))
     application.add_handler(CommandHandler("cancel", cancel))
     #При старте подгружаются все отложенные задачи

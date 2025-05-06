@@ -15,12 +15,24 @@ async def schedule_start(update: Update, context: ContextTypes.DEFAULT_TYPE)->in
     Точка входа ConversationHandler для /schedule
     Запрашиваем время и текст
     """
-    await update.message.reply_text(
-        'Пожалуйста, введите время и текст напоминания в форме: \n'
-        'ЧЧ:ММ Текст\n'
-        'Или /cancel для отмены'
-    )
-    return WAIT_INPUT
+    try:
+        #парсинг времени и текст
+        time_str = context.args[0]#"HH:MM"
+        message_text = " ".join(context.args[1:])
+        remind_time = datetime.strptime(time_str, "%H:%M").time()
+        record_reminder(remind_time, message_text, update, context)
+        await update.message.reply_text(
+            f"Напомининание установлено"
+            )
+        return ConversationHandler.END 
+    except(IndexError, ValueError):
+        await update.message.reply_text(
+            'Пожалуйста, введите время и текст напоминания в форме: \n'
+            'ЧЧ:ММ Текст\n'
+            'Или /cancel для отмены'
+        )
+        return WAIT_INPUT
+    
 async def schedule_input(update: Update, context: ContextTypes.DEFAULT_TYPE)->int:
     """
     Получаем строку и пытаемся распарсарсить.
@@ -28,7 +40,9 @@ async def schedule_input(update: Update, context: ContextTypes.DEFAULT_TYPE)->in
     """
     text = update.message.text.strip()
     if ' ' not in text:
-        await update.message.reply_text('Неправильно, попробуй ещё раз.')
+        await update.message.reply_text(
+            "Неправильно, попробуй ещё раз."
+            )
         return WAIT_INPUT
     time_str, message_text = text.split(' ', 1)
     try:
@@ -37,8 +51,17 @@ async def schedule_input(update: Update, context: ContextTypes.DEFAULT_TYPE)->in
         await update.message.reply_text(
             "Неправильно, попробуй ещё раз."
         )
-        return WAIT_INPUT     
-
+        return WAIT_INPUT
+    record_reminder(remind_time,message_text, update, context)
+    return ConversationHandler.END     
+async def schedule_cancel (update: Update, context: ContextTypes.DEFAULT_TYPE)->int:
+    """
+    /cancel - внутри диалога прерывает диалог
+    """
+    await update.message.reply_text(
+        f"Установка напоминания отменена"
+    )
+    return ConversationHandler.END
 async def schedule (update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обрабатывает команду /schedule
@@ -94,3 +117,24 @@ async def send_reminder(context:ContextTypes.DEFAULT_TYPE):
             db.delete_reminder(remind_id)
     except Exception as e:
         logger.error(f"Ошибка")
+
+async def record_reminder(remind_time, message_text, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    
+    """
+    now = datetime.now()
+    remind_datetime = datetime.combine(now.date(), remind_time)
+    if remind_datetime<=now:#Если время прошло переносится на следующий день
+        remind_datetime+=timedelta(days=1)
+    chat_id = update.effective_chat.id
+    #Сохранение напоминания в БД
+    remind_id = db.add_reminder(chat_id, remind_datetime, message_text)
+    #Вычисление задержки и планирование задачи
+    delay = (remind_datetime-now).total_seconds()
+    context.job_queue.run_once(
+        send_reminder,
+        when = delay,
+        chat_id=chat_id,
+        data={'message':message_text, 'reminder_id':remind_id}
+    )
+       
