@@ -17,7 +17,7 @@ def init_db():
     cursor.execute(
         """
     CREATE TABLE IF NOT EXISTS reminders (
-                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   id INTEGER PRIMARY KEY,
                    chat_id INTEGER NOT NULL,
                    remind_time TEXT NOT NULL,
                    message TEXT NOT NULL
@@ -35,12 +35,19 @@ def add_reminder(chat_id: int, remind_time: datetime, message: str) -> int:
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    cursor.execute("SELECT id FROM reminders ORDER BY id")
+    user_ids = [row[0] for row in cursor.fetchall()]
+    free_id = 1
+    for uid in user_ids:
+        if uid != free_id:
+            break
+        free_id += 1
     cursor.execute(
         """
-    INSERT INTO reminders(
-                   chat_id, remind_time, message)
-                   VALUES (?,?,?)""",
-        (chat_id, remind_time.isoformat(), message),
+        INSERT INTO reminders(id, chat_id, remind_time, message)
+        VALUES (?,?,?,?)
+        """,
+        (free_id, chat_id, remind_time.isoformat(), message),
     )
     reminder_id = cursor.lastrowid  # id для удаления
     conn.commit()

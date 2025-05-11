@@ -1,4 +1,31 @@
+# Конфигурационные файлы и секреты
 config.py
-__pycache__/
-*.pyc
+
+# Виртуальное окружение
 venv/
+.env
+*.env
+
+# Кеш и временные файлы Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Логи
+*.log
+
+# Базы данных
+*.db
+reminders.db
+
+# Файлы тестов
+test_*.py
+/tests/
+
+# IDE и редакторы
+.vscode/
+.idea/
+
+# ОС-специфические файлы
+.DS_Store
+Thumbs.db

@@ -37,13 +37,22 @@ async def set_bot_commands(app: Application):
     await app.bot.set_my_commands(commands)
 
 
+async def cleanup_webhook(app: Application):
+    """
+    Удаление вебхука при старте
+    """
+    await app.bot.delete_webhook(drop_pending_updates=True)
+
+
 def main():
+
     # Инициализация бд
     db.init_db()
-    # Псотройка приложения и регистрация команд
+    # Посотройка приложения и регистрация команд
     application = (
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
+    application.bot.delete_webhook(drop_pending_updates=True)
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("schedule", schedule_start)],
         states={

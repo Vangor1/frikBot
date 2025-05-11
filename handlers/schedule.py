@@ -21,8 +21,7 @@ async def schedule_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         time_str = context.args[0]  # "HH:MM"
         message_text = " ".join(context.args[1:])
         remind_time = datetime.strptime(time_str, "%H:%M").time()
-        record_reminder(remind_time, message_text, update, context)
-        await update.message.reply_text(f"Напомининание установлено на {remind_time}")
+        await record_reminder(remind_time, message_text, update, context)
         return ConversationHandler.END
     except (IndexError, ValueError):
         await update.message.reply_text(
@@ -48,7 +47,7 @@ async def schedule_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except (IndexError, ValueError):
         await update.message.reply_text("Неправильно, попробуй ещё раз.")
         return WAIT_INPUT
-    record_reminder(remind_time, message_text, update, context)
+    await record_reminder(remind_time, message_text, update, context)
     return ConversationHandler.END
 
 
@@ -132,3 +131,4 @@ async def record_reminder(
         chat_id=chat_id,
         data={"message": message_text, "reminder_id": remind_id},
     )
+    await update.message.reply_text(f"Напомининание установлено на {remind_time}")
