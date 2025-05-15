@@ -5,6 +5,7 @@ from telegram import BotCommand
 from telegram.ext import (
     Application,
     ApplicationBuilder,
+    CallbackQueryHandler,
     CommandHandler,
     ConversationHandler,
     MessageHandler,
@@ -15,7 +16,14 @@ import db
 from config import BOT_TOKEN
 from handlers.cancel import cancel, dialogue_cancel
 from handlers.list import list_reminders
-from handlers.schedule import WAIT_INPUT, schedule_input, schedule_start, send_reminder
+from handlers.schedule import (
+    WAIT_DATE,
+    WAIT_DATETIME_MESSAGE,
+    handle_date_selection,
+    handle_time_message,
+    schedule_start,
+    send_reminder,
+)
 from handlers.start import start
 
 logging.basicConfig(
@@ -37,13 +45,6 @@ async def set_bot_commands(app: Application):
     await app.bot.set_my_commands(commands)
 
 
-async def cleanup_webhook(app: Application):
-    """
-    Удаление вебхука при старте
-    """
-    await app.bot.delete_webhook(drop_pending_updates=True)
-
-
 def main():
 
     # Инициализация бд
@@ -52,17 +53,22 @@ def main():
     application = (
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
-    application.bot.delete_webhook(drop_pending_updates=True)
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("schedule", schedule_start)],
         states={
-            WAIT_INPUT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, schedule_input)
+            WAIT_DATE: [
+                # Ловим DAY_<число> и пустые (IGNORE)
+                CallbackQueryHandler(handle_date_selection, pattern=r"^DAY_\d+$")
+            ],
+            WAIT_DATETIME_MESSAGE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_time_message)
             ],
         },
         fallbacks=[CommandHandler("cancel", dialogue_cancel)],
     )
     application.add_handler(conv_handler)
+
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("list", list_reminders))
     application.add_handler(CommandHandler("cancel", cancel))
