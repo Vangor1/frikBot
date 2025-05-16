@@ -56,10 +56,10 @@ def main():
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("schedule", schedule_start)],
-        states={
+        states={#Ловим все inline-колбэки
             WAIT_DATE: [
                 # Ловим DAY_<число> и пустые (IGNORE)
-                CallbackQueryHandler(handle_date_selection, pattern=r"^DAY_\d+$")
+                CallbackQueryHandler(handle_date_selection)
             ],
             WAIT_DATETIME_MESSAGE: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_time_message)

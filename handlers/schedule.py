@@ -1,7 +1,7 @@
 import calendar
 import logging
 from datetime import datetime, timedelta
-
+import re
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
@@ -47,10 +47,16 @@ async def handle_date_selection(
     """
     query = update.callback_query
     await query.answer()
-    print("DEBUG: попали в handle_date_selection:", query.data)
-    if query.data == "IGNORE":
+    data = query.data
+    print("DEBUG callback_data:", data)
+    #if query.data == "IGNORE":
+    #    return WAIT_DATE
+        #if not data.startswith("DAY_"):
+    #    return WAIT_DATE
+    m = re.match(r'^day_(\d+)$', data, flags=re.IGNORECASE)
+    if not m:
         return WAIT_DATE
-    day = int(query.data.split("_")[1])
+    day = int(m.group(1))
     month = context.user_data["calendar_month"]
     year = context.user_data["calendar_year"]
     try:
