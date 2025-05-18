@@ -6,7 +6,7 @@ import db
 
 async def list_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    /list показывает все активные напоминания
+    Обрабатывает команду /list — выводит все активные напоминания пользователя.
     """
     chat_id = update.effective_chat.id
     reminders = db.get_reminders_by_chat(chat_id)

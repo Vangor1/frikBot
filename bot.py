@@ -26,12 +26,14 @@ from handlers.schedule import (
 )
 from handlers.start import start
 
+# Настройка логирования для удобства отладки и мониторинга
 logging.basicConfig(
     format="%(asctime)s -%(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
 
+# Установка доступных команд для бота (отображаются в интерфейсе Telegram)
 async def set_bot_commands(app: Application):
     """
     Установка всплывающих подсказок команд
@@ -49,26 +51,35 @@ def main():
 
     # Инициализация бд
     db.init_db()
-    # Посотройка приложения и регистрация команд
+    # Постройка приложения и регистрация команд
     application = (
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
-
+    # ConversationHandler отвечает за логику календаря и ввода напоминания
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("schedule", schedule_start)],
-        states={#Ловим все inline-колбэки
+        states={  # Ловим все inline-колбэки
             WAIT_DATE: [
                 # Ловим DAY_<число> и пустые (IGNORE)
-                CallbackQueryHandler(handle_date_selection)
+                CallbackQueryHandler(
+                    handle_date_selection
+                )  # выбор даты через календарь
             ],
             WAIT_DATETIME_MESSAGE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_time_message)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, handle_time_message
+                )  # ввод времени и текста
             ],
         },
-        fallbacks=[CommandHandler("cancel", dialogue_cancel)],
+        fallbacks=[
+            CommandHandler("cancel", dialogue_cancel)
+        ],  # обработка отмены в любой момент
+        per_user=True,
+        per_chat=True,
+        per_message=False,
     )
     application.add_handler(conv_handler)
-
+    # Добавляем обработчики остальных команд
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("list", list_reminders))
     application.add_handler(CommandHandler("cancel", cancel))

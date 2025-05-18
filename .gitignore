@@ -9,6 +9,7 @@ venv/
 # Кеш и временные файлы Python
 __pycache__/
 handlers/__pycache__/
+/handlers/__pycache__
 *.py[cod]
 *.pyo
 
