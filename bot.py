@@ -16,6 +16,7 @@ import db
 from config import BOT_TOKEN
 from handlers.cancel import cancel, dialogue_cancel
 from handlers.list import list_reminders
+from handlers.profile import profile, profile_callback
 from handlers.schedule import (
     WAIT_DATE,
     WAIT_DATETIME_MESSAGE,
@@ -43,6 +44,7 @@ async def set_bot_commands(app: Application):
         BotCommand("schedule", "Установить напоминание"),
         BotCommand("list", "Показать все напоминания"),
         BotCommand("cancel", "Отменить напоминание по ID"),
+        BotCommand("profile", "Личный кабинет"),
     ]
     await app.bot.set_my_commands(commands)
 
@@ -83,6 +85,12 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("list", list_reminders))
     application.add_handler(CommandHandler("cancel", cancel))
+    application.add_handler(CommandHandler("profile", profile))
+    application.add_handler(
+        CallbackQueryHandler(
+            profile_callback, pattern="^(cancel_reminder|show_list|create_reminder)$"
+        )
+    )
     # При старте подгружаются все отложенные задачи
     for rem_id, chat_id, remind_time, message in db.get_pending_reminders():
         # Вычисляется задержка до момента времени напоминание (remind_time)

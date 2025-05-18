@@ -24,7 +24,10 @@ async def schedule_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     context.user_data["calendar_year"] = year
 
     markup = build_calendar(year, month)
-    await update.message.reply_text("Выберите дату", reply_markup=markup)
+    message = update.message or (
+        update.callback_query and update.callback_query.message
+    )
+    await message.reply_text("Выберите дату", reply_markup=markup)
     return WAIT_DATE
 
 
@@ -37,7 +40,7 @@ async def handle_date_selection(
     """
     query = update.callback_query
     data = query.data
-
+    print("DEBUG callback_data:", data)
     if data == "PREV_MONTH":
         year = context.user_data["calendar_year"]
         month = context.user_data["calendar_month"]
@@ -73,14 +76,14 @@ async def handle_date_selection(
         markup = build_calendar(year, month)
         await query.edit_message_reply_markup(reply_markup=markup)
         return WAIT_DATE
-    elif data == "CANCEL":
+    if data == "CANCEL":
         await query.answer("Вы отменили установку напоминания.")
         return ConversationHandler.END
     if data == "IGNORE":
         await query.answer()
         return WAIT_DATE
     # Обработка выбора дня
-    print("DEBUG callback_data:", data)
+
     m = re.match(r"^day_(\d+)$", data, flags=re.IGNORECASE)
     if not m:
         await query.answer()

@@ -12,12 +12,17 @@ async def list_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reminders = db.get_reminders_by_chat(chat_id)
     if not reminders:
         # Сообщение об отсутсвии напоминаний
-        await update.message.reply_text("Нечего напоминать")
-        return
-    # Создание списка
-    lines = ["Ваши напоминания:"]
-    for rem_id, _, remind_dt, message in reminders:
-        when = remind_dt.strftime("%Y-%m-%d %H:%M")
-        lines.append(f"ID {rem_id}: {when} - {message}")
+        text = "Нечего напоминать"
+    else:
+        # Создание списка
+        lines = ["Ваши напоминания:"]
+        for rem_id, _, remind_dt, message in reminders:
+            when = remind_dt.strftime("%Y-%m-%d %H:%M")
+            lines.append(f"ID {rem_id}: {when} - {message}")
+        text = "\n".join(lines)
     # Отправка сообщения
-    await update.message.reply_text("\n".join(lines))
+    message = update.message or (
+        update.callback_query and update.callback_query.message
+    )
+    if message:
+        await message.reply_text(text)
