@@ -7,24 +7,15 @@ from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
     CommandHandler,
-    ConversationHandler,
-    MessageHandler,
-    filters,
 )
 
 import db
 from config import BOT_TOKEN
-from handlers.cancel import cancel, dialogue_cancel
-from handlers.list import list_reminders
-from handlers.profile import profile, profile_callback
-from handlers.schedule import (
-    WAIT_DATE,
-    WAIT_DATETIME_MESSAGE,
-    handle_date_selection,
-    handle_time_message,
-    schedule_start,
-    send_reminder,
-)
+from handlers.button_callback import button_callback
+
+# from handlers.cancel import dialogue_cancel
+from handlers.profile import profile
+from handlers.schedule.shedule_send import send_reminder
 from handlers.start import start
 
 # Настройка логирования для удобства отладки и мониторинга
@@ -41,56 +32,19 @@ async def set_bot_commands(app: Application):
     """
     commands = [
         BotCommand("start", "Запустить бота"),
-        BotCommand("schedule", "Установить напоминание"),
-        BotCommand("list", "Показать все напоминания"),
-        BotCommand("cancel", "Отменить напоминание по ID"),
         BotCommand("profile", "Личный кабинет"),
     ]
     await app.bot.set_my_commands(commands)
 
 
 def main():
-
     # Инициализация бд
     db.init_db()
-    # Постройка приложения и регистрация команд
     application = (
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
-    # ConversationHandler отвечает за логику календаря и ввода напоминания
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("schedule", schedule_start)],
-        states={  # Ловим все inline-колбэки
-            WAIT_DATE: [
-                # Ловим DAY_<число> и пустые (IGNORE)
-                CallbackQueryHandler(
-                    handle_date_selection
-                )  # выбор даты через календарь
-            ],
-            WAIT_DATETIME_MESSAGE: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, handle_time_message
-                )  # ввод времени и текста
-            ],
-        },
-        fallbacks=[
-            CommandHandler("cancel", dialogue_cancel)
-        ],  # обработка отмены в любой момент
-        per_user=True,
-        per_chat=True,
-        per_message=False,
-    )
-    application.add_handler(conv_handler)
-    # Добавляем обработчики остальных команд
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("list", list_reminders))
-    application.add_handler(CommandHandler("cancel", cancel))
     application.add_handler(CommandHandler("profile", profile))
-    application.add_handler(
-        CallbackQueryHandler(
-            profile_callback, pattern="^(cancel_reminder|show_list|create_reminder)$"
-        )
-    )
     # При старте подгружаются все отложенные задачи
     for rem_id, chat_id, remind_time, message in db.get_pending_reminders():
         # Вычисляется задержка до момента времени напоминание (remind_time)
@@ -103,6 +57,9 @@ def main():
             chat_id=chat_id,
             data={"message": message, "reminder_id": rem_id},
         )
+    application.add_handler(
+        CallbackQueryHandler(button_callback)
+    )  # Обработка нажатий на кнопки
     application.run_polling()
 
 

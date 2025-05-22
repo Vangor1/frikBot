@@ -1,4 +1,4 @@
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 import db
@@ -6,9 +6,11 @@ import db
 
 async def list_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Обрабатывает команду /list — выводит все активные напоминания пользователя.
+    Выводит список напоминаний пользователя
     """
-    chat_id = update.effective_chat.id
+    query = update.callback_query
+    await query.answer()
+    chat_id = query.message.chat.id
     reminders = db.get_reminders_by_chat(chat_id)
     if not reminders:
         # Сообщение об отсутсвии напоминаний
@@ -20,9 +22,31 @@ async def list_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE):
             when = remind_dt.strftime("%Y-%m-%d %H:%M")
             lines.append(f"ID {rem_id}: {when} - {message}")
         text = "\n".join(lines)
-    # Отправка сообщения
-    message = update.message or (
-        update.callback_query and update.callback_query.message
+    markup = list_buttons()
+    await query.edit_message_text(text, reply_markup=markup)
+
+
+def list_buttons():
+    """
+    Создает кнопки для списка напоминаний
+    """
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "Создать напоминание",
+                    callback_data="create_reminder",
+                ),
+                InlineKeyboardButton(
+                    "Удалить напоминание",
+                    callback_data="cancel_reminder",
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    "🔙 В личный кабинет",
+                    callback_data="profile",
+                ),
+            ],
+        ]
     )
-    if message:
-        await message.reply_text(text)

@@ -17,6 +17,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user.username or "",
     )
     await update.message.reply_text(
-        f"Дарова, {user.first_name}! Я фрик"
-        "Отправь /schedule ЧЧ:ММ Текст собщения для установления напоминания"
+        f"Дарова, {user.first_name}! Я фрик!\n"
+        "Отправь /profile для отображения личного кабинета\n"
     )
