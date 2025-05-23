@@ -7,14 +7,17 @@ from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
     CommandHandler,
+    ConversationHandler,
+    MessageHandler,
+    filters,
 )
 
 import db
 from config import BOT_TOKEN
 from handlers.button_callback import button_callback
-
-# from handlers.cancel import dialogue_cancel
+from handlers.cancel import cancel
 from handlers.profile import profile
+from handlers.schedule.selection_date import REQUEST_TEXT, receive_text, selection_date
 from handlers.schedule.shedule_send import send_reminder
 from handlers.start import start
 
@@ -45,6 +48,19 @@ def main():
     )
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("profile", profile))
+    application.add_handler(
+        MessageHandler(filters.TEXT & filters.Regex(r"^/cancel_\d+$"), cancel)
+    )
+    conv_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(selection_date, pattern="^day_")],
+        states={
+            REQUEST_TEXT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_text)
+            ],
+        },
+        fallbacks=[CommandHandler("profile", profile)],
+    )
+    application.add_handler(conv_handler)
     # При старте подгружаются все отложенные задачи
     for rem_id, chat_id, remind_time, message in db.get_pending_reminders():
         # Вычисляется задержка до момента времени напоминание (remind_time)

@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 
 # from handlers.cancel import dialogue_cancel
@@ -57,5 +56,5 @@ async def button_callback(update, context):
         markup = build_calendar(year, month)
         await query.edit_message_reply_markup(reply_markup=markup)
         return WAIT_DATE
-    elif re.match(r"^day_(\d+)$", data, flags=re.IGNORECASE):
+    elif data.startswith("day_"):
         await selection_date(update, context)

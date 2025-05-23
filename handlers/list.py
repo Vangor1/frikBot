@@ -20,7 +20,10 @@ async def list_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE):
         lines = ["Ваши напоминания:"]
         for rem_id, _, remind_dt, message in reminders:
             when = remind_dt.strftime("%Y-%m-%d %H:%M")
-            lines.append(f"ID {rem_id}: {when} - {message}")
+            lines.append(
+                f"""ID {rem_id}: {when} - {message}
+                /cancel_{rem_id} - удалить напоминание"""
+            )
         text = "\n".join(lines)
     markup = list_buttons()
     await query.edit_message_text(text, reply_markup=markup)

@@ -1,25 +1,31 @@
-from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler
+import re
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
 
 import db
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    /cancel <id> - удаляет напоминание
-    Проверяет ID на существование и принадлежность пользователю
-    затем удаляет из бд и из jobQueue
+    /cancel_<id> - удаляет напоминание по id
+    Проверяет ID на существование и принадлежность пользователю,
+    затем удаляет из БД и из jobQueue
     """
-    # Проверка наличия аргумента
-    if not context.args:
-        await update.message.reply_text("Укажите ID: /cancel <id>")
+    markup = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("Отмена", callback_data="profile"),
+            ]
+        ]
+    )
+    m = re.match(r"/cancel_(\d+)", update.message.text)
+    if not m:
+        await update.message.reply_text(
+            "Некорректная команда. Используйте /cancel_<id>"
+        )
         return
-    # Парсинг ID и обработка ошибки
-    try:
-        rem_id = int(context.args[0])
-    except ValueError:
-        await update.message.reply_text("ID должен быть числом.")
-        return
+    rem_id = int(m.group(1))
     chat_id = update.effective_chat.id
     record = db.get_reminder_by_id(rem_id)
     # Проверка на существование напоминания и его принадлежности
@@ -31,12 +37,6 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for job in jobs:
         job.schedule_removal()
     db.delete_reminder(rem_id)
-    await update.message.reply_text(f"Напоминание {rem_id} отменено")
-
-
-async def dialogue_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """
-    /cancel - внутри диалога прерывает диалог
-    """
-    await update.message.reply_text("Установка напоминания отменена")
-    return ConversationHandler.END
+    await update.message.reply_text(
+        f"Напоминание {rem_id} отменено", reply_markup=markup
+    )

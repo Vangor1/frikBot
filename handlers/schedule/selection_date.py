@@ -34,10 +34,11 @@ async def selection_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     markup = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("Отмена", callback_data="CANCEL"),
+                InlineKeyboardButton("Отмена", callback_data="profile"),
             ]
         ]
     )
+    print("DEBUG selected_date:", selected_date)
     await query.edit_message_text(
         f"Дата выбрана: {selected_date.date()}\n"
         "Теперь введите время и текст напоминания в форме: \n"
@@ -52,13 +53,20 @@ async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     Получает текст напоминания от пользователя
     Проверяет формат
     """
+    print("DEBUG receive_text")
     user_text = update.message.text
     user_text = update.message.text.strip()
+    markup = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("Отмена", callback_data="profile"),
+            ]
+        ]
+    )
     if " " not in user_text:
         await update.message.reply_text(
-            "Неправильный формат, попробуйте ещё раз.\n"
-            "Формат: ЧЧ:ММ Текст\n"
-            "Или /cancel для отмены"
+            "Неправильный формат, попробуйте ещё раз.\n" "Формат: ЧЧ:ММ Текст\n",
+            reply_markup=markup,
         )
         return REQUEST_TEXT
     time_str, message_text = user_text.split(" ", 1)
@@ -67,14 +75,15 @@ async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     except ValueError:
         await update.message.reply_text(
             "Неправильный формат времени, попробуйте ещё раз.\n"
-            "Формат: ЧЧ:ММ Текст\n"
-            "Или /cancel для отмены"
+            "Формат: ЧЧ:ММ Текст\n",
+            reply_markup=markup,
         )
         return REQUEST_TEXT
     date = context.user_data.get("selected_date")
     if not date:
         await update.message.reply_text(
-            "Выберите дату перед установкой времени.\n" "Или /cancel для отмены"
+            "Выберите дату перед установкой времени.\n",
+            reply_markup=markup,
         )
         return REQUEST_TEXT
     remind_date_time = datetime.combine(date.date(), remind_time)
