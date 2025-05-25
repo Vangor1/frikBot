@@ -14,6 +14,7 @@ from telegram.ext import (
 
 import db
 from config import BOT_TOKEN
+from data.study_structure.English import English
 from handlers.button_callback import button_callback
 from handlers.cancel import cancel
 from handlers.profile import profile
@@ -46,6 +47,7 @@ def main():
     application = (
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
+    db.sync_study_structure(English)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("profile", profile))
     application.add_handler(
