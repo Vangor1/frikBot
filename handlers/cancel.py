@@ -3,7 +3,7 @@ import re
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-import db
+from database import delete_reminder, get_reminder_by_id
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -27,7 +27,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     rem_id = int(m.group(1))
     chat_id = update.effective_chat.id
-    record = db.get_reminder_by_id(rem_id)
+    record = get_reminder_by_id(rem_id)
     # Проверка на существование напоминания и его принадлежности
     if not record or record[1] != chat_id:
         await update.message.reply_text("Напоминание с таким ID не найдено")
@@ -36,7 +36,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     jobs = context.job_queue.get_jobs_by_name(str(rem_id))
     for job in jobs:
         job.schedule_removal()
-    db.delete_reminder(rem_id)
+    delete_reminder(rem_id)
     await update.message.reply_text(
         f"Напоминание {rem_id} отменено", reply_markup=markup
     )

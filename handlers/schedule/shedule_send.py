@@ -2,7 +2,7 @@ import logging
 
 from telegram.ext import ContextTypes
 
-import db
+from database import delete_reminder
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,6 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
         )
         # Удаление записи из бд чтоб повторно не сработало
         if remind_id is not None:
-            db.delete_reminder(remind_id)
+            delete_reminder(remind_id)
     except Exception as e:
         logger.error(f"Ошибка {e} при отправке напоминания {message_text}")

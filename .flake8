@@ -1,4 +1,4 @@
 [flake8]
 max-line-length = 88
 extend-ignore = E203, W503
-exclude = .git,__pycache__,.venv,build,dist,data/study_structure/*
+exclude = .git,__pycache__,.venv,build,dist,data/study_structure/*,database/__init__.py,database/init_database.py

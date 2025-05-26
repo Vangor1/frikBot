@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-import db
+from database import get_reminders_by_chat
 
 
 async def list_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -11,7 +11,7 @@ async def list_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     chat_id = query.message.chat.id
-    reminders = db.get_reminders_by_chat(chat_id)
+    reminders = get_reminders_by_chat(chat_id)
     if not reminders:
         # Сообщение об отсутсвии напоминаний
         text = "Нечего напоминать"

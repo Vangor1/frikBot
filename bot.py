@@ -12,9 +12,9 @@ from telegram.ext import (
     filters,
 )
 
-import db
 from config import BOT_TOKEN
 from data.study_structure.English import English
+from database import get_pending_reminders, init_db, sync_study_structure
 from handlers.button_callback import button_callback
 from handlers.cancel import cancel
 from handlers.profile import profile
@@ -43,11 +43,11 @@ async def set_bot_commands(app: Application):
 
 def main():
     # Инициализация бд
-    db.init_db()
+    init_db()
     application = (
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
-    db.sync_study_structure(English)
+    sync_study_structure(English)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("profile", profile))
     application.add_handler(
@@ -64,7 +64,7 @@ def main():
     )
     application.add_handler(conv_handler)
     # При старте подгружаются все отложенные задачи
-    for rem_id, chat_id, remind_time, message in db.get_pending_reminders():
+    for rem_id, chat_id, remind_time, message in get_pending_reminders():
         # Вычисляется задержка до момента времени напоминание (remind_time)
         delay = (remind_time - datetime.now()).total_seconds()
         if delay < 0:

@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from db import add_user
+from database import add_user
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
-import db
+from database import add_reminder
 from handlers.schedule.shedule_send import send_reminder
 
 REQUEST_TEXT = 1
@@ -92,7 +92,7 @@ async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         remind_date_time += timedelta(days=1)
     chat_id = update.effective_chat.id
     # Сохранение напоминания в БД
-    remind_id = db.add_reminder(chat_id, remind_date_time, message_text)
+    remind_id = add_reminder(chat_id, remind_date_time, message_text)
     # Вычисление задержки и планирование задачи
     delay = (remind_date_time - now).total_seconds()
     context.job_queue.run_once(
