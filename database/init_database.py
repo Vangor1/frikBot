@@ -18,6 +18,7 @@ def init_db():
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    # Таблица напоминаний
     cursor.execute(
         """
     CREATE TABLE IF NOT EXISTS reminders (
@@ -29,6 +30,7 @@ def init_db():
                 )
     """
     )
+    # Таблица пользователей
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
@@ -39,47 +41,63 @@ def init_db():
                 )
     """
     )
+    # Таблица предметов
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS subjects (
             id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,                     -- Название предмета
-            description TEXT                        -- Описание предмета (может быть пустым)
+            name TEXT NOT NULL,                  -- Название предмета
+            description TEXT                     -- Описание предмета
         )
         """
     )
+    # Таблица этапов/уровней
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS topics (
+        CREATE TABLE IF NOT EXISTS stages (
             id INTEGER PRIMARY KEY,
-            subject_id INTEGER NOT NULL,            -- ID предмета, к которому относится тема
-            name TEXT NOT NULL,                     -- Название темы
-            description TEXT,                       -- Описание темы (может быть пустым)
-            FOREIGN KEY(subject_id) REFERENCES subjects(id)
+            subject_id INTEGER NOT NULL,         -- ID предмета, которому принадлежит этап
+            name TEXT NOT NULL,                  -- Название этапа
+            description TEXT,                    -- Описание этапа
+            FOREIGN KEY(subject_id) REFERENCES subjects(id) -- Внешний ключ на subjects
         )
         """
     )
+    # Таблица разделов внутри этапа
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS sections (
             id INTEGER PRIMARY KEY,
-            topic_id INTEGER NOT NULL,              -- ID темы, к которой относится раздел
-            name TEXT NOT NULL,                     -- Название раздела
-            description TEXT,                       -- Описание раздела (может быть пустым)
-            FOREIGN KEY(topic_id) REFERENCES topics(id)
+            stage_id INTEGER NOT NULL,           -- ID этапа, которому принадлежит раздел
+            name TEXT NOT NULL,                  -- Название раздела
+            description TEXT,                    -- Описание раздела
+            FOREIGN KEY(stage_id) REFERENCES stages(id) -- Внешний ключ на stages
         )
         """
     )
+    # Таблица тем внутри раздела
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS user_section_grades (
+        CREATE TABLE IF NOT EXISTS topics (
             id INTEGER PRIMARY KEY,
-            user_id INTEGER NOT NULL,               -- ID пользователя, которому принадлежит оценка
-            section_id INTEGER NOT NULL,            -- ID раздела, к которому относится оценка
-            grade INTEGER NOT NULL,                 -- Оценка пользователя по разделу
-            updated_at TEXT NOT NULL,               -- Дата и время последнего обновления оценки (строка в формате ISO)
-            FOREIGN KEY(user_id) REFERENCES users(chat_id),
-            FOREIGN KEY(section_id) REFERENCES sections(id)
+            section_id INTEGER NOT NULL,         -- ID раздела, которому принадлежит тема
+            name TEXT NOT NULL,                  -- Название темы
+            description TEXT,                    -- Описание темы (например, "Правила чтения и произношения слов")
+            FOREIGN KEY(section_id) REFERENCES sections(id) -- Внешний ключ на sections
+        )
+        """
+    )
+    # Таблица оценок пользователя по разделам
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_topic_grades (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,            -- ID пользователя (chat_id из users)
+            topic_id INTEGER NOT NULL,           -- ID темы
+            grade INTEGER NOT NULL,              -- Оценка пользователя по теме
+            updated_at TEXT NOT NULL,            -- Дата и время последнего обновления оценки (ISO строка)
+            FOREIGN KEY(user_id) REFERENCES users(chat_id), -- Внешний ключ на пользователей
+            FOREIGN KEY(topic_id) REFERENCES topics(id)     -- Внешний ключ на темы
         )
         """
     )

@@ -62,10 +62,9 @@ def get_user_subjects(user_id: int):
     cursor.execute(
         """
         SELECT DISTINCT s.name
-        FROM subjects s
-        JOIN topics t ON t.subject_id = s.id
-        JOIN sections sec ON sec.topic_id = t.id
-        JOIN user_section_grades usg ON usg.section_id = sec.id
+        FROM sections s
+        JOIN topics t ON t.section_id = s.id
+        JOIN user_topic_grades usg ON usg.topic_id = t.id
         WHERE usg.user_id = ?
     """,
         (user_id,),

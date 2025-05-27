@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from database import get_last_lesson_for_user, get_user_stats, get_user_subjects
+from database import get_user_stats, get_user_subjects
 
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -27,20 +27,20 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         text.append("❗️Ты еще не начал изучать ни один предмет.")
     # Последнее занятие и оценка
-    last_lesson = get_last_lesson_for_user(chat_id)
-    if last_lesson:
-        updated_at, subj_name, topic_name, section_name, grade = last_lesson
-        text.append("")
-        text.append(
-            f"""📅 Последнее занятие:
-            {updated_at.strftime('%Y-%m-%d %H:%M')} - {subj_name}
-            {topic_name} / {section_name}
-            Оценка: {grade if grade is not None else 'Нет оценки'}
-            """
-        )
-    else:
-        text.append("")
-        text.append("❗️ Ты еще не проходил занятия.")
+    # last_lesson = get_last_lesson_for_user(chat_id)
+    # if last_lesson:
+    #    updated_at, subj_name, topic_name, section_name, grade = last_lesson
+    #    text.append("")
+    #    text.append(
+    #        f"""📅 Последнее занятие:
+    #        {updated_at.strftime('%Y-%m-%d %H:%M')} - {subj_name}
+    #        {topic_name} / {section_name}
+    #        Оценка: {grade if grade is not None else 'Нет оценки'}
+    #        """
+    #    )
+    # else:
+    #    text.append("")
+    #    text.append("❗️ Ты еще не проходил занятия.")
     # Напоминания
     total, next_reminders = get_user_stats(chat_id)
     text.append("")

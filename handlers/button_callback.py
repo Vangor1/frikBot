@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from handlers.choose_subject import choose_subject
+
 # from handlers.cancel import dialogue_cancel
 from handlers.list import list_reminders
 from handlers.profile import profile
@@ -58,3 +60,9 @@ async def button_callback(update, context):
         return WAIT_DATE
     elif data.startswith("day_"):
         await selection_date(update, context)
+    elif data.startswith("subject_"):
+        subject = data.split("subject_")[1]
+        context.user_data["subject"] = subject
+        await profile(update, context)
+    elif data == "select_subject":
+        await choose_subject(update, context)
