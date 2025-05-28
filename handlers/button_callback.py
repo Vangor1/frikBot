@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from handlers.choose_subject import choose_subject
+from handlers.choose_subject import choose_section, choose_stage, choose_subject
 
 # from handlers.cancel import dialogue_cancel
 from handlers.list import list_reminders
@@ -17,12 +17,14 @@ async def button_callback(update, context):
     await query.answer()
     data = query.data
     print("DEBUG callback_data:", data)
+    # Обработка нажатий основных кнопок в меню (лист, создание напоминания, профиль)
     if data == "show_list":
         await list_reminders(update, context)
     elif data == "create_reminder":
         await schedule_start(update, context)
     elif data == "profile":
         await profile(update, context)
+    # Обработка нажатий в календаре (выбор даты, переходы между месяцами)
     elif data == "PREV_MONTH":
         year = context.user_data["calendar_year"]
         month = context.user_data["calendar_month"]
@@ -60,9 +62,10 @@ async def button_callback(update, context):
         return WAIT_DATE
     elif data.startswith("day_"):
         await selection_date(update, context)
-    elif data.startswith("subject_"):
-        subject = data.split("subject_")[1]
-        context.user_data["subject"] = subject
-        await profile(update, context)
+    # Обработка нажатий в меню выбора предмета
     elif data == "select_subject":
         await choose_subject(update, context)
+    elif data.startswith("subject_"):
+        await choose_stage(update, context)
+    elif data.startswith("stage_"):
+        await choose_section(update, context)
