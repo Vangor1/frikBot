@@ -28,7 +28,11 @@ def get_user_stats(chat_id: int):
     """
     Возвращает кортеж:
     - количество напоминаний пользователя,
-    - (id, дата/время, текст) ближайшего напоминания, если есть.
+    - (id, дата/время, текст, subject_name, stage_name, section_name, topic_name)
+    ближайшего напоминания, если есть.
+
+    subject_name, stage_name, section_name, topic_name - могут быть None, если не
+    указаны в напоминании.
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -36,9 +40,18 @@ def get_user_stats(chat_id: int):
     total = cursor.fetchone()[0]
     cursor.execute(
         """
-        SELECT id, remind_time, message
-        FROM reminders WHERE chat_id=?
-        ORder by remind_time ASC
+        SELECT r.id, r.remind_time, r.message,
+               s.name as subject_name,
+               st.name as stage_name,
+               sec.name as section_name,
+               t.name as topic_name
+        FROM reminders r
+        LEFT JOIN subjects s ON r.subject_id = s.id
+        LEFT JOIN stages st ON r.stage_id = st.id
+        LEFT JOIN sections sec ON r.section_id = sec.id
+        LEFT JOIN topics t ON r.topic_id = t.id
+        WHERE r.chat_id=?
+        ORDER BY r.remind_time ASC
         LIMIT 1
         """,
         (chat_id,),
@@ -46,9 +59,9 @@ def get_user_stats(chat_id: int):
     total_reminders = cursor.fetchone()
     conn.close()
     if total_reminders:
-        rem_id, rt_str, msg = total_reminders
+        rem_id, rt_str, msg, subject, stage, section, topic = total_reminders
         remind_dt = datetime.fromisoformat(rt_str)
-        return total, (rem_id, remind_dt, msg)
+        return total, (rem_id, remind_dt, msg, subject, stage, section, topic)
     else:
         return total, None
 

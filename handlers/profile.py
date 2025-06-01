@@ -46,9 +46,22 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total, next_reminders = database.get_user_stats(chat_id)
     # text.append("")
     if next_reminders:
-        rem_id, remind_dt, message = next_reminders
+        (
+            rem_id,
+            remind_dt,
+            message,
+            subject_name,
+            stage_name,
+            section_name,
+            topic_name,
+        ) = next_reminders
         text.append("🔔 *Ближайшее занятие:*")
-        text.append(f"{remind_dt.strftime('%Y-%m-%d %H:%M')} — {message}")
+        text.append(
+            f"""
+{remind_dt.strftime('%Y-%m-%d %H:%M')} — {message}
+По предмету: {subject_name}, на тему: {topic_name}
+            """
+        )
     else:
         text.append("🔔 *Нет запланированных занятий*")
 
