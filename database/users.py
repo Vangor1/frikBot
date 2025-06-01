@@ -53,22 +53,50 @@ def get_user_stats(chat_id: int):
         return total, None
 
 
+def add_user_subject(user_id: int, subject_id: int):
+    """
+    Добавляет выбранный предмет для пользователя.
+    Если такая пара уже есть, ничего не делает (INSERT OR IGNORE).
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR IGNORE INTO user_subjects (user_id, subject_id) VALUES (?, ?)",
+        (user_id, subject_id),
+    )
+    conn.commit()
+    conn.close()
+
+
 def get_user_subjects(user_id: int):
     """
-    Возвращает список названий предметов, по которым у пользователя есть оценки.
+    Возвращает список предметов, выбранных пользователем.
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT DISTINCT s.name
-        FROM sections s
-        JOIN topics t ON t.section_id = s.id
-        JOIN user_topic_grades usg ON usg.topic_id = t.id
-        WHERE usg.user_id = ?
-    """,
+        SELECT subjects.id, subjects.name
+        FROM subjects
+        INNER JOIN user_subjects ON subjects.id = user_subjects.subject_id
+        WHERE user_subjects.user_id = ?
+        """,
         (user_id,),
     )
-    result = [row[0] for row in cursor.fetchall()]
+    result = cursor.fetchall()
     conn.close()
     return result
+
+
+def remove_user_subject(user_id: int, subject_id: int):
+    """
+    Удаляет выбранный предмет пользователя.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM user_subjects WHERE user_id = ? AND subject_id = ?",
+        (user_id, subject_id),
+    )
+    conn.commit()
+    conn.close()

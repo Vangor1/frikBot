@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from database import get_user_stats, get_user_subjects
+import database
 
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -19,11 +19,12 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
         send = update.message.reply_text
     text = [f"*👤 Личный кабинет {update.effective_user.first_name}*"]
     # Предметы пользователя
-    user_subjects = get_user_subjects(chat_id)
+    user_subjects = database.get_user_subjects(chat_id)
     if user_subjects:
+        subjects_list = "\n".join(f"- {name}" for _, name in user_subjects)
         text.append("")
         text.append("📚 Ваши предметы:")
-        text.extend([f"- {subject}" for subject in user_subjects])
+        text.append(f"Выбранные предметы:\n{subjects_list}\n")
     else:
         text.append("❗️Ты еще не начал изучать ни один предмет.")
     # Последнее занятие и оценка
@@ -42,8 +43,8 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     #    text.append("")
     #    text.append("❗️ Ты еще не проходил занятия.")
     # Напоминания
-    total, next_reminders = get_user_stats(chat_id)
-    text.append("")
+    total, next_reminders = database.get_user_stats(chat_id)
+    # text.append("")
     if next_reminders:
         rem_id, remind_dt, message = next_reminders
         text.append("🔔 *Ближайшее занятие:*")

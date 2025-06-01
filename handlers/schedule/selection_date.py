@@ -4,11 +4,166 @@ from datetime import datetime, timedelta
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
+import database
 from database import add_reminder
 from handlers.schedule.shedule_send import send_reminder
 
 REQUEST_TEXT = 1
 WAIT_DATE = 2
+
+
+async def choose_subject_for_reminder(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """
+    Окно выбора предмета для изучения.
+    """
+    print("DEBUG choose_subject_for_reminder")
+    query = update.callback_query
+    await query.answer()
+    context.user_data["day"] = query.data
+    print("DEBUG ", context.user_data["day"])
+    chat_id = int(query.message.chat.id)
+    user_subjects = database.get_user_subjects(chat_id)
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                subject[1], callback_data=f"subjectforreminder_{subject[0]}"
+            )
+        ]
+        for subject in user_subjects
+    ]
+    keyboard.append(
+        [InlineKeyboardButton("🔙 В личный кабинет", callback_data="profile")]
+    )
+    await query.edit_message_text(
+        "Выберите предмет для планирования занятия:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+    )
+
+
+async def choose_stage(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Окно выбора раздела для изучения.
+    """
+    query = update.callback_query
+    await query.answer()
+    subject_id = context.user_data.get("subject_id")
+    stages = database.get_stages_by_subject(subject_id)
+    print("DEBUG stages:", stages)
+    keyboard = [
+        [InlineKeyboardButton(stage[1], callback_data=f"stage_{stage[0]}")]
+        for stage in stages
+    ]
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                "🔙 В ЛК",
+                callback_data="profile",
+            ),
+            InlineKeyboardButton(
+                "🔙 В выбор предмета", callback_data=context.user_data["day"]
+            ),
+        ]
+    )
+    await query.edit_message_text(
+        "Выберите этап для изучения:", reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+
+def can_open_next_stage(user_id: int, stage_id: int, threshold: int = 80) -> bool:
+    """
+    Проверяет, может ли пользователь открыть следующий этап:
+    средняя оценка по темам этапа >= threshold.
+    """
+    avg = database.get_average_grade(user_id, stage_id)
+    return avg is not None and avg >= threshold
+
+
+async def choose_section(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Окно выбора раздела для изучения.
+    """
+    query = update.callback_query
+    await query.answer()
+    stage_id = context.user_data.get("stage_id")
+    subject_id = context.user_data["subject_id"]
+    if stage_id == 1:
+        # Этап 1 всегда доступен
+        accessible = True
+    else:
+        accessible = can_open_next_stage(query.from_user.id, stage_id, threshold=80)
+    if accessible:
+        sections = database.get_sections_by_stage(stage_id)
+        print(sections)
+        keyboard = [
+            [InlineKeyboardButton(section[1], callback_data=f"section_{section[0]}")]
+            for section in sections
+        ]
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    "🔙 В ЛК",
+                    callback_data="profile",
+                ),
+                InlineKeyboardButton(
+                    "🔙 Назад",
+                    callback_data=f"subjectforreminder_{subject_id}",
+                ),
+            ],
+        )
+        await query.edit_message_text(
+            "Выберите раздел для изучения",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+        )
+    else:
+        await query.edit_message_text(
+            """Вы не можете открыть этот этап, так как ваша средняя оценка
+            по темам предыдущего этапа ниже 80%.""",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "🔙 В выбор этапа",
+                            callback_data=f"stage_{stage_id}",
+                        )
+                    ]
+                ]
+            ),
+        )
+
+
+async def choose_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Окно выбора темы для изучения.
+    """
+    query = update.callback_query
+    await query.answer()
+    section_id = context.user_data.get("section_id")
+    stage_id = context.user_data.get("stage_id")
+    topics = database.get_topics_by_section(section_id)
+    print(topics)
+    keyboard = [
+        [InlineKeyboardButton(topic[1], callback_data=f"topic_{topic[0]}")]
+        for topic in topics
+    ]
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                "🔙 В ЛК",
+                callback_data="profile",
+            ),
+            InlineKeyboardButton(
+                "🔙 В выбор раздела",
+                callback_data=f"stage_{stage_id}",
+            ),
+        ]
+    )
+    await query.edit_message_text(
+        "Выберите тему для изучения",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+    )
 
 
 async def selection_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -18,10 +173,12 @@ async def selection_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("DEBUG selection_date")
     query = update.callback_query
     await query.answer()
-    data = query.data
-    print("DEBUG callback_data:", data)
+    topic_id = int(query.data.split("_")[1])
+    print("topic----id: ", topic_id)
+    context.user_data["topic_id"] = topic_id
+    print("DEBUG callback_data:", context.user_data["day"])
     # Пытаемся найти соответствие между строкой в переменной data и шаблоном
-    m = re.match(r"^day_(\d+)$", data, flags=re.IGNORECASE)
+    m = re.match(r"^day_(\d+)$", context.user_data["day"], flags=re.IGNORECASE)
     if not m:
         await query.answer()
         return
@@ -38,9 +195,9 @@ async def selection_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ]
     )
-    print("DEBUG selected_date:", selected_date)
+    print("DEBUG selected_date:", context.user_data["selected_date"])
     await query.edit_message_text(
-        f"Дата выбрана: {selected_date.date()}\n"
+        f"Дата выбрана: {context.user_data["selected_date"].date()}\n"
         "Теперь введите время и текст напоминания в форме: \n"
         "ЧЧ:ММ Текст\n",
         reply_markup=markup,
@@ -91,8 +248,20 @@ async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     if remind_date_time <= now:  # Если время прошло переносится на следующий день
         remind_date_time += timedelta(days=1)
     chat_id = update.effective_chat.id
+    subject_id = context.user_data.get("subject_id")
+    stage_id = context.user_data.get("stage_id")
+    section_id = context.user_data.get("section_id")
+    topic_id = context.user_data.get("topic_id")
     # Сохранение напоминания в БД
-    remind_id = add_reminder(chat_id, remind_date_time, message_text)
+    remind_id = add_reminder(
+        chat_id,
+        remind_date_time,
+        message_text,
+        subject_id,
+        stage_id,
+        section_id,
+        topic_id,
+    )
     # Вычисление задержки и планирование задачи
     delay = (remind_date_time - now).total_seconds()
     context.job_queue.run_once(

@@ -54,7 +54,7 @@ def main():
         MessageHandler(filters.TEXT & filters.Regex(r"^/cancel_\d+$"), cancel)
     )
     conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(selection_date, pattern="^day_")],
+        entry_points=[CallbackQueryHandler(selection_date, pattern="^topic_")],
         states={
             REQUEST_TEXT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_text)

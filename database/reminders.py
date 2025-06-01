@@ -6,7 +6,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "..", "reminders.db")
 
 
-def add_reminder(chat_id: int, remind_time: datetime, message: str) -> int:
+def add_reminder(
+    chat_id: int,
+    remind_time: datetime,
+    message: str,
+    subject_id=None,
+    stage_id=None,
+    section_id=None,
+    topic_id=None,
+) -> int:
     """
     Добавляет напоминание для пользователя, возвращает id напоминания.
     """
@@ -21,10 +29,20 @@ def add_reminder(chat_id: int, remind_time: datetime, message: str) -> int:
         free_id += 1
     cursor.execute(
         """
-        INSERT INTO reminders(id, chat_id, remind_time, message)
-        VALUES (?,?,?,?)
+        INSERT INTO reminders(id, chat_id, remind_time, message,
+        subject_id, stage_id, section_id, topic_id)
+        VALUES (?,?,?,?,?,?,?,?)
         """,
-        (free_id, chat_id, remind_time.isoformat(), message),
+        (
+            free_id,
+            chat_id,
+            remind_time.isoformat(),
+            message,
+            subject_id,
+            stage_id,
+            section_id,
+            topic_id,
+        ),
     )
     reminder_id = cursor.lastrowid  # id для удаления
     conn.commit()

@@ -26,7 +26,15 @@ def init_db():
                 chat_id INTEGER NOT NULL,           -- Telegram chat_id пользователя, кому адресовано напоминание
                 remind_time TEXT NOT NULL,          -- Время напоминания (строка в формате ISO)
                 message TEXT NOT NULL,              -- Текст напоминания
-                FOREIGN KEY (chat_id) REFERENCES users(chat_id)
+                subject_id INTEGER,                 -- Предмет
+                stage_id INTEGER,                   -- Этап
+                section_id INTEGER,                 -- Раздел
+                topic_id INTEGER,                   -- Тема
+                FOREIGN KEY (chat_id) REFERENCES users(chat_id),
+                FOREIGN KEY (subject_id) REFERENCES subjects(id),
+                FOREIGN KEY (stage_id) REFERENCES stages(id),
+                FOREIGN KEY (section_id) REFERENCES sections(id),
+                FOREIGN KEY (topic_id) REFERENCES topics(id)
                 )
     """
     )
@@ -39,6 +47,19 @@ def init_db():
                     last_name TEXT NOT NULL,        -- Фамилия пользователя (может быть пустой строкой)
                     username TEXT NOT NULL          -- Имя пользователя в Telegram (может быть пустой строкой)
                 )
+    """
+    )
+    # Таблица для выбранных предметов пользователя
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_subjects (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,      -- chat_id пользователя из таблицы users
+                    subject_id INTEGER NOT NULL,   -- id предмета из subjects
+                    FOREIGN KEY(user_id) REFERENCES users(chat_id),
+                    FOREIGN KEY(subject_id) REFERENCES subjects(id),
+                    UNIQUE(user_id, subject_id)    -- чтобы не было дубликатов
+                    )
     """
     )
     # Таблица предметов
