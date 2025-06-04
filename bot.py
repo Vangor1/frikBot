@@ -23,7 +23,7 @@ from handlers.profile import profile
 from handlers.schedule.selection_date import REQUEST_TEXT, receive_text, selection_date
 from handlers.schedule.shedule_send import send_reminder
 from handlers.start import start
-from handlers.test_ask_gpt import ask_gpt, start_gpt
+from handlers.t_ask_gpt import ask_gpt, start_gpt
 
 # Настройка логирования для удобства отладки и мониторинга
 logging.basicConfig(
