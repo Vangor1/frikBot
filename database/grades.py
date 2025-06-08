@@ -1,9 +1,7 @@
-import os
 import sqlite3
 from datetime import datetime
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "..", "reminders.db")
+from .db import DB_PATH
 
 
 def set_user_section_grade(user_id: int, section_id: int, grade: int):

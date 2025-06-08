@@ -17,9 +17,11 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
     message_text = job.data.get("message")
     remind_id = job.data.get("reminder_id")
     try:  # Отправка пользователю текст напоминания
-        await context.bot.send_message(
-            chat_id=chat_id, text=f"Напоминание: {message_text}"
+        lesson_hint = (
+            f"Напоминание: {message_text}\n"
+            f"Чтобы пройти занятие, отправьте команду /lesson_{remind_id}"
         )
+        await context.bot.send_message(chat_id=chat_id, text=lesson_hint)
         # Удаление записи из бд чтоб повторно не сработало
         if remind_id is not None:
             delete_reminder(remind_id)

@@ -1,9 +1,7 @@
-import os
 import sqlite3
 from datetime import datetime
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "..", "reminders.db")
+from .db import DB_PATH
 
 
 def add_reminder(
@@ -109,3 +107,44 @@ def get_reminder_by_id(reminder_id: int):
     rem_id, chat_id, rt_str, message = row
     remind_dt = datetime.fromisoformat(rt_str)
     return (rem_id, chat_id, remind_dt, message)
+
+
+def get_reminder_details(reminder_id: int):
+    """
+    Возвращает напоминание вместе с названиями темы и раздела.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT r.id, r.chat_id, r.remind_time, r.message,
+               r.subject_id, r.stage_id, r.section_id, r.topic_id,
+               s.name, st.name, sec.name, t.name
+        FROM reminders r
+        LEFT JOIN subjects s ON r.subject_id = s.id
+        LEFT JOIN stages st ON r.stage_id = st.id
+        LEFT JOIN sections sec ON r.section_id = sec.id
+        LEFT JOIN topics t ON r.topic_id = t.id
+        WHERE r.id=?
+        """,
+        (reminder_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    rt = datetime.fromisoformat(row[2])
+    return {
+        "id": row[0],
+        "chat_id": row[1],
+        "remind_time": rt,
+        "message": row[3],
+        "subject_id": row[4],
+        "stage_id": row[5],
+        "section_id": row[6],
+        "topic_id": row[7],
+        "subject_name": row[8],
+        "stage_name": row[9],
+        "section_name": row[10],
+        "topic_name": row[11],
+    }

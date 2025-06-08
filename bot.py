@@ -19,11 +19,11 @@ from data.study_structure.English import English
 from database import get_pending_reminders, init_db, sync_study_structure
 from handlers.button_callback import button_callback
 from handlers.cancel import cancel
+from handlers.lesson import end_lesson, lesson_chat, start_lesson
 from handlers.profile import profile
 from handlers.schedule.selection_date import REQUEST_TEXT, receive_text, selection_date
 from handlers.schedule.shedule_send import send_reminder
 from handlers.start import start
-from handlers.t_ask_gpt import ask_gpt, start_gpt
 
 # Настройка логирования для удобства отладки и мониторинга
 logging.basicConfig(
@@ -56,8 +56,14 @@ def main():
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
     sync_study_structure(English)
-    application.add_handler(CommandHandler("start_gpt", start_gpt))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ask_gpt))
+    application.add_handler(CommandHandler("end_lesson", end_lesson))
+    application.add_handler(
+        MessageHandler(filters.Regex(r"^/lesson_\\d+$"), start_lesson)
+    )
+    # Обработка сообщений во время урока
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, lesson_chat)
+    )
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("profile", profile))
     application.add_handler(

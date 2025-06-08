@@ -1,9 +1,7 @@
-import os
 import sqlite3
 from datetime import datetime
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "..", "reminders.db")
+from .db import DB_PATH
 
 
 def add_user(chat_id: int, first_name: str, last_name: str, username: str):

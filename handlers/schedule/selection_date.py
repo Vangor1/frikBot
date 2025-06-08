@@ -197,7 +197,7 @@ async def selection_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     print("DEBUG selected_date:", context.user_data["selected_date"])
     await query.edit_message_text(
-        f"Дата выбрана: {context.user_data["selected_date"].date()}\n"
+        f"Дата выбрана: {context.user_data['selected_date'].date()}\n"
         "Теперь введите время и текст напоминания в форме: \n"
         "ЧЧ:ММ Текст\n",
         reply_markup=markup,
