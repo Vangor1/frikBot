@@ -13,7 +13,7 @@ from handlers.schedule.selection_date import (
     choose_subject_for_reminder,
     choose_topic,
 )
-from handlers.schedule.shedule_start import build_calendar, schedule_start
+from handlers.schedule.sсhedule_start import build_calendar, schedule_start
 
 
 async def button_callback(update, context):

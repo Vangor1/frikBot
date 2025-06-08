@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 
 import database
 from database import add_reminder, get_average_grade_for_stage
-from handlers.schedule.shedule_send import send_reminder
+from handlers.schedule.sсhedule_send import send_reminder
 
 REQUEST_TEXT = 1
 WAIT_DATE = 2

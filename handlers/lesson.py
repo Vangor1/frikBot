@@ -54,7 +54,16 @@ async def lesson_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     history = context.user_data["gpt_history"]
     history.append({"role": "user", "content": user_message})
-    responce = client.chat.completions.create(model="gpt-4.1-nano", messages=history)
+    try:
+        responce = client.chat.completions.create(
+            model="gpt-4.1-nano", messages=history
+        )
+    except Exception as exc:
+        logger.exception("Ошибка при обращении к OpenAI", exc_info=exc)
+        await update.message.reply_text(
+            "Произошла ошибка при обращении к сервису. Попробуйте позже."
+        )
+        return
     answer = responce.choices[0].message.content
     history.append({"role": "assistant", "content": answer})
     markup = InlineKeyboardMarkup(
@@ -93,7 +102,16 @@ async def end_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
             продолжить урок в следующий раз.""",
         }
     )
-    response = client.chat.completions.create(model="gpt-4.1-nano", messages=history)
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-nano", messages=history
+        )
+    except Exception as exc:
+        logger.exception("Ошибка при обращении к OpenAI", exc_info=exc)
+        await message.reply_text(
+            "Произошла ошибка при обращении к сервису. Попробуйте позже."
+        )
+        return
     result = response.choices[0].message.content
     score_match = re.search(r"(\d{1,3})", result)
     score = int(score_match.group(1)) if score_match else None

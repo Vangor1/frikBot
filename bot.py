@@ -22,18 +22,29 @@ from handlers.cancel import cancel
 from handlers.lesson import end_lesson, lesson_chat, start_lesson
 from handlers.profile import profile
 from handlers.schedule.selection_date import REQUEST_TEXT, receive_text, selection_date
-from handlers.schedule.shedule_send import send_reminder
+from handlers.schedule.sсhedule_send import send_reminder
 from handlers.start import start
+
+load_dotenv()
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+if not BOT_TOKEN:
+    print("Ошибка: переменная окружения BOT_TOKEN не установлена.")
+    raise SystemExit(1)
+
+if not OPENAI_API_KEY:
+    print("Ошибка: переменная окружения OPENAI_API_KEY не установлена.")
+    raise SystemExit(1)
+
+
+openai.api_key = OPENAI_API_KEY
 
 # Настройка логирования для удобства отладки и мониторинга
 logging.basicConfig(
     format="%(asctime)s -%(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = OPENAI_API_KEY
 
 
 # Установка доступных команд для бота (отображаются в интерфейсе Telegram)

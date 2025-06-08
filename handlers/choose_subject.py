@@ -42,7 +42,11 @@ async def handle_choose_subject(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     await query.answer()
     chat_id = int(query.message.chat.id)
-    subject_id = query.data.split("_")[1]
+    subject_id_str = query.data.split("_")[1]
+    if not subject_id_str.isdigit():
+        await query.edit_message_text("Некорректный ID предмета")
+        return
+    subject_id = int(subject_id_str)
     database.add_user_subject(chat_id, subject_id)
     keyboard = [
         [
