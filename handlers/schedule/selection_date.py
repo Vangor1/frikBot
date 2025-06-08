@@ -5,7 +5,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
 import database
-from database import add_reminder
+from database import add_reminder, get_average_grade_for_stage
 from handlers.schedule.shedule_send import send_reminder
 
 REQUEST_TEXT = 1
@@ -75,9 +75,13 @@ async def choose_stage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def can_open_next_stage(user_id: int, stage_id: int, threshold: int = 80) -> bool:
     """
     Проверяет, может ли пользователь открыть следующий этап:
-    средняя оценка по темам этапа >= threshold.
+    Для этого оценивается средняя оценка пользователя по темам предыдущего этапа.
+    Если средняя оценка предыдущего этапа равна или превышает >= threshold.
     """
-    avg = database.get_average_grade(user_id, stage_id)
+    prev_stage_id = stage_id - 1
+    if prev_stage_id < 1:
+        return True
+    avg = get_average_grade_for_stage(user_id, prev_stage_id)
     return avg is not None and avg >= threshold
 
 
@@ -269,6 +273,7 @@ async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         when=delay,
         chat_id=chat_id,
         data={"message": message_text, "reminder_id": remind_id},
+        name=str(remind_id),
     )
     await update.message.reply_text(
         f"Напоминание установлено на {remind_date_time.strftime('%Y-%m-%d %H:%M')}"

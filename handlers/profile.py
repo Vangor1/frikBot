@@ -58,6 +58,7 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text.append("🔔 *Ближайшее занятие:*")
         text.append(
             f"""
+ID: {rem_id}
 {remind_dt.strftime('%Y-%m-%d %H:%M')} — {message}
 По предмету: {subject_name}, на тему: {topic_name}
             """

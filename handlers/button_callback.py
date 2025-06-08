@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from handlers.choose_subject import choose_subject, handle_choose_subject
+from handlers.lesson import end_lesson
 
 # from handlers.cancel import dialogue_cancel
 from handlers.list import list_reminders
@@ -89,3 +90,5 @@ async def button_callback(update, context):
         context.user_data["section_id"] = section_id
         print(context.user_data["section_id"])
         await choose_topic(update, context)
+    elif data == "end_lesson":
+        await end_lesson(update, context)

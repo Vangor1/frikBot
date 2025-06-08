@@ -57,3 +57,25 @@ def get_average_grade(user_id: int, section_id: int):
     average = cursor.fetchone()[0]
     conn.close()
     return average if average is not None else None
+
+
+def get_average_grade_for_stage(user_id: int, stage_id: int):
+    """
+    Возвращает среднюю оценку пользователя по всем темам этапа.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT AVG(utg.grade)
+        FROM topics t
+        INNER JOIN sections s ON t.section_id = s.id
+        LEFT JOIN user_topic_grades utg
+            ON utg.topic_id = t.id AND utg.user_id = ?
+        WHERE s.stage_id = ?
+        """,
+        (user_id, stage_id),
+    )
+    average = cursor.fetchone()[0]
+    conn.close()
+    return average if average is not None else None

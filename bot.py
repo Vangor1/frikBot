@@ -56,14 +56,14 @@ def main():
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
     sync_study_structure(English)
-    application.add_handler(CommandHandler("end_lesson", end_lesson))
     application.add_handler(
-        MessageHandler(filters.Regex(r"^/lesson_\\d+$"), start_lesson)
+        MessageHandler(filters.Regex(r"^/lesson_\d+$"), start_lesson)
     )
     # Обработка сообщений во время урока
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, lesson_chat)
     )
+    application.add_handler(CommandHandler("end_lesson", end_lesson))
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("profile", profile))
     application.add_handler(
@@ -90,6 +90,7 @@ def main():
             when=delay,
             chat_id=chat_id,
             data={"message": message, "reminder_id": rem_id},
+            name=str(rem_id),
         )
     application.add_handler(
         CallbackQueryHandler(button_callback)
