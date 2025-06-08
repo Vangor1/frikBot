@@ -57,8 +57,17 @@ async def lesson_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     responce = client.chat.completions.create(model="gpt-4.1-nano", messages=history)
     answer = responce.choices[0].message.content
     history.append({"role": "assistant", "content": answer})
-    markup = lesson_button()
-    await update.message.reply_text(answer, reply_markup=markup)
+    markup = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "Завершить урок",
+                    callback_data="end_lesson",
+                ),
+            ],
+        ]
+    )
+    await update.message.reply_text(answer, reply_markup=markup, parse_mode="Markdown")
     return True
 
 
@@ -66,11 +75,15 @@ async def end_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Завершает урок и сохраняет оценку прогресса
     """
-    logger.info(f"Запущен end_lesson для {update.message.text!r}")
+    query = update.callback_query
+    message = query.message if query else update.message
+    if query:
+        await query.answer()
+    logger.info("Запущен end_lesson")
     history = context.user_data.get("gpt_history")
     reminder_id = context.user_data.get("lesson_reminder_id")
     if not history or reminder_id is None:
-        await update.message.reply_text("Урок не был начат")
+        await message.reply_text("Урок не был начат")
         return
     history.append(
         {
@@ -87,21 +100,14 @@ async def end_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     database.add_lesson_progress(reminder_id, update.effective_chat.id, result, score)
     del context.user_data["gpt_history"]
     del context.user_data["lesson_reminder_id"]
-    markup = lesson_button()
-    await update.message.reply_text(result, reply_markup=markup)
-
-
-def lesson_button():
-    """
-    Создает кнопку для урока
-    """
-    return InlineKeyboardMarkup(
+    markup = InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "Завершить урок",
-                    callback_data="end_lesson",
+                    "В профиль",
+                    callback_data="profile",
                 ),
             ],
         ]
     )
+    await message.reply_text(result, reply_markup=markup, parse_mode="Markdown")
