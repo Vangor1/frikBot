@@ -116,6 +116,15 @@ async def end_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     score_match = re.search(r"(\d{1,3})", result)
     score = int(score_match.group(1)) if score_match else None
     database.add_lesson_progress(reminder_id, update.effective_chat.id, result, score)
+    details = database.get_reminder_details(reminder_id)
+    topic_id = details.get("topic_id")
+    section_id = details.get("section_id")
+    user_id = update.effective_chat.id
+    if score is not None and topic_id:
+        database.set_user_topic_grade(user_id, topic_id, score)
+        avg = database.get_average_grade(user_id, section_id)
+        if avg is not None:
+            database.set_user_section_grade(user_id, section_id, int(avg))
     del context.user_data["gpt_history"]
     del context.user_data["lesson_reminder_id"]
     markup = InlineKeyboardMarkup(

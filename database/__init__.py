@@ -3,6 +3,7 @@ from .grades import (
     get_average_grade,
     get_average_grade_for_stage,
     set_user_section_grade,
+    set_user_topic_grade,
 )
 from .init_database import init_db
 from .lesson_progress import add_lesson_progress

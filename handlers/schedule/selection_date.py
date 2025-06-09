@@ -72,17 +72,43 @@ async def choose_stage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def can_open_next_stage(user_id: int, stage_id: int, threshold: int = 80) -> bool:
+def can_open_next_stage(
+    user_id: int, context: ContextTypes.DEFAULT_TYPE, threshold: int = 80
+) -> bool:
     """
     Проверяет, может ли пользователь открыть следующий этап:
     Для этого оценивается средняя оценка пользователя по темам предыдущего этапа.
     Если средняя оценка предыдущего этапа равна или превышает >= threshold.
     """
+    stage_id = context.user_data.get("stage_id")
     prev_stage_id = stage_id - 1
     if prev_stage_id < 1:
         return True
     avg = get_average_grade_for_stage(user_id, prev_stage_id)
     return avg is not None and avg >= threshold
+
+
+async def not_can_open_next_stage(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Сообщение о недоступности этапа
+    """
+    query = update.callback_query
+    await query.answer()
+    subject_id = context.user_data.get("subject_id")
+    await query.edit_message_text(
+        """Вы не можете открыть этот этап, так как ваша средняя оценка
+            по темам предыдущего этапа ниже 80%.""",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "🔙 В выбор этапа",
+                        callback_data=f"subjectforreminder_{subject_id}",
+                    )
+                ]
+            ]
+        ),
+    )
 
 
 async def choose_section(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -93,49 +119,28 @@ async def choose_section(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     stage_id = context.user_data.get("stage_id")
     subject_id = context.user_data["subject_id"]
-    if stage_id == 1:
-        # Этап 1 всегда доступен
-        accessible = True
-    else:
-        accessible = can_open_next_stage(query.from_user.id, stage_id, threshold=80)
-    if accessible:
-        sections = database.get_sections_by_stage(stage_id)
-        print(sections)
-        keyboard = [
-            [InlineKeyboardButton(section[1], callback_data=f"section_{section[0]}")]
-            for section in sections
-        ]
-        keyboard.append(
-            [
-                InlineKeyboardButton(
-                    "🔙 В ЛК",
-                    callback_data="profile",
-                ),
-                InlineKeyboardButton(
-                    "🔙 Назад",
-                    callback_data=f"subjectforreminder_{subject_id}",
-                ),
-            ],
-        )
-        await query.edit_message_text(
-            "Выберите раздел для изучения",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
-    else:
-        await query.edit_message_text(
-            """Вы не можете открыть этот этап, так как ваша средняя оценка
-            по темам предыдущего этапа ниже 80%.""",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "🔙 В выбор этапа",
-                            callback_data=f"stage_{stage_id}",
-                        )
-                    ]
-                ]
+    sections = database.get_sections_by_stage(stage_id)
+    print(sections)
+    keyboard = [
+        [InlineKeyboardButton(section[1], callback_data=f"section_{section[0]}")]
+        for section in sections
+    ]
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                "🔙 В ЛК",
+                callback_data="profile",
             ),
-        )
+            InlineKeyboardButton(
+                "🔙 Назад",
+                callback_data=f"subjectforreminder_{subject_id}",
+            ),
+        ],
+    )
+    await query.edit_message_text(
+        "Выберите раздел для изучения",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+    )
 
 
 async def choose_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):

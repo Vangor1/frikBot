@@ -106,7 +106,7 @@ def init_db():
         )
         """
     )
-    # Таблица оценок пользователя по разделам
+    # Таблица оценок пользователя по темам
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS user_topic_grades (
@@ -117,6 +117,20 @@ def init_db():
                     updated_at TEXT NOT NULL,            -- Дата и время последнего обновления оценки (ISO строка)
                     FOREIGN KEY(user_id) REFERENCES users(chat_id), -- Внешний ключ на пользователей
                     FOREIGN KEY(topic_id) REFERENCES topics(id)     -- Внешний ключ на темы
+        )
+        """
+    )
+    # Таблица средних оценок пользователя по разделам
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_section_grades (
+                    id INTEGER PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    section_id INTEGER NOT NULL,
+                    grade INTEGER NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY(user_id) REFERENCES users(chat_id),
+                    FOREIGN KEY(section_id) REFERENCES sections(id)
         )
         """
     )

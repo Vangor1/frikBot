@@ -4,6 +4,39 @@ from datetime import datetime
 from .db import DB_PATH
 
 
+def set_user_topic_grade(user_id: int, topic_id: int, grade: int):
+    """
+    Добавляет или обновляет оценку пользователя за конкретную тему
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    now = datetime.now().isoformat()
+    cursor.execute(
+        "SELECT id FROM user_topic_grades WHERE user_id=? AND topic_id=?",
+        (user_id, topic_id),
+    )
+    existing = cursor.fetchone()
+    if existing:
+        cursor.execute(
+            """
+            UPDATE user_topic_grades
+            SET grade=?, updated_at=?
+            WHERE user_id=? AND topic_id=?
+            """,
+            (grade, now, user_id, topic_id),
+        )
+    else:
+        cursor.execute(
+            """
+            INSERT INTO user_topic_grades (user_id, topic_id, grade, updated_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user_id, topic_id, grade, now),
+        )
+    conn.commit()
+    conn.close()
+
+
 def set_user_section_grade(user_id: int, section_id: int, grade: int):
     """
     Ставит или обновляет оценку пользователя за конкретный раздел.

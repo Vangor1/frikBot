@@ -8,10 +8,12 @@ from handlers.list import list_reminders
 from handlers.profile import profile
 from handlers.schedule.selection_date import WAIT_DATE  # selection_date,
 from handlers.schedule.selection_date import (
+    can_open_next_stage,
     choose_section,
     choose_stage,
     choose_subject_for_reminder,
     choose_topic,
+    not_can_open_next_stage,
 )
 from handlers.schedule.sсhedule_start import build_calendar, schedule_start
 
@@ -25,6 +27,8 @@ async def button_callback(update, context):
     data = query.data
     print("DEBUG callback_data in button callback:", data)
     # Обработка нажатий основных кнопок в меню (лист, создание напоминания, профиль)
+    if data == "IGNORE":
+        return
     if data == "show_list":
         await list_reminders(update, context)
     elif data == "create_reminder":
@@ -83,7 +87,10 @@ async def button_callback(update, context):
         stage_id = int(query.data.split("_")[1])
         print("stage----id: ", stage_id)
         context.user_data["stage_id"] = stage_id
-        await choose_section(update, context)
+        if can_open_next_stage(query.from_user.id, context):
+            await choose_section(update, context)
+        else:
+            await not_can_open_next_stage(update, context)
     elif data.startswith("section_"):
         section_id = int(query.data.split("_")[1])
         print("section----id: ", section_id)
