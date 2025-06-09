@@ -67,6 +67,16 @@ def main():
         ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
     )
     sync_study_structure(English)
+    conv_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(selection_date, pattern="^topic_")],
+        states={
+            REQUEST_TEXT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_text)
+            ],
+        },
+        fallbacks=[CommandHandler("profile", profile)],
+    )
+    application.add_handler(conv_handler)
     application.add_handler(
         MessageHandler(filters.Regex(r"^/lesson_\d+$"), start_lesson)
     )
@@ -79,17 +89,7 @@ def main():
     application.add_handler(CommandHandler("profile", profile))
     application.add_handler(
         MessageHandler(filters.TEXT & filters.Regex(r"^/cancel_\d+$"), cancel)
-    )
-    conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(selection_date, pattern="^topic_")],
-        states={
-            REQUEST_TEXT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_text)
-            ],
-        },
-        fallbacks=[CommandHandler("profile", profile)],
-    )
-    application.add_handler(conv_handler)
+    )    
     # При старте подгружаются все отложенные задачи
     for rem_id, chat_id, remind_time, message in get_pending_reminders():
         # Вычисляется задержка до момента времени напоминание (remind_time)
