@@ -44,7 +44,7 @@ def build_calendar(year: int, month: int) -> InlineKeyboardMarkup:
                     )  # неактивная дата
                 else:
                     row.append(
-                        InlineKeyboardButton(str(day), callback_data=f"day_{day}")
+                        InlineKeyboardButton(str(day), callback_data=f"cmd=day;id={day}")
                     )
         keyboard.append(row)
     # Добавляем кнопки для навигации по месяцам

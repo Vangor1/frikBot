@@ -2,6 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 import database
+import utils
 
 
 async def choose_subject(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -22,7 +23,7 @@ async def choose_subject(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [
             InlineKeyboardButton(
-                subject[1], callback_data=f"subjectforchoose_{subject[0]}"
+                subject[1], callback_data=f"cmd=subjectforchoose;id={subject[0]}"
             )
         ]
         for subject in subjects
@@ -42,8 +43,9 @@ async def handle_choose_subject(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     await query.answer()
     chat_id = int(query.message.chat.id)
-    subject_id_str = query.data.split("_")[1]
-    if not subject_id_str.isdigit():
+    params = utils.parse_callback_data(query.data)
+    subject_id_str=params.get("id")
+    if not subject_id_str or not subject_id_str.isdigit():
         await query.edit_message_text("Некорректный ID предмета")
         return
     subject_id = int(subject_id_str)

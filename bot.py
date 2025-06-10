@@ -22,7 +22,7 @@ from handlers.cancel import cancel
 from handlers.lesson import end_lesson, lesson_chat, start_lesson
 from handlers.profile import profile
 from handlers.schedule.selection_date import REQUEST_TEXT, receive_text, selection_date
-from handlers.schedule.sсhedule_send import send_reminder
+from handlers.schedule.schedule_send import send_reminder
 from handlers.start import start
 
 load_dotenv()
@@ -74,7 +74,7 @@ def main():
         MessageHandler(filters.TEXT & filters.Regex(r"^/cancel_\d+$"), cancel)
     )
     conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(selection_date, pattern="^topic_")],
+        entry_points=[CallbackQueryHandler(selection_date, pattern="^cmd=topic")],
         states={
             REQUEST_TEXT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_text)

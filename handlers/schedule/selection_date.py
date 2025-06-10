@@ -5,8 +5,9 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
 import database
+import utils
 from database import add_reminder, get_average_grade_for_stage
-from handlers.schedule.sсhedule_send import send_reminder
+from handlers.schedule.schedule_send import send_reminder
 
 REQUEST_TEXT = 1
 WAIT_DATE = 2
@@ -22,14 +23,15 @@ async def choose_subject_for_reminder(
     print("DEBUG choose_subject_for_reminder")
     query = update.callback_query
     await query.answer()
-    context.user_data["day"] = query.data
+    param = utils.parse_callback_data(query.data)
+    context.user_data["day"] = int(param.get("id", 0))
     print("DEBUG ", context.user_data["day"])
     chat_id = int(query.message.chat.id)
     user_subjects = database.get_user_subjects(chat_id)
     keyboard = [
         [
             InlineKeyboardButton(
-                subject[1], callback_data=f"subjectforreminder_{subject[0]}"
+                subject[1], callback_data=f"cmd=subjectforreminder;id={subject[0]}"
             )
         ]
         for subject in user_subjects
@@ -53,7 +55,7 @@ async def choose_stage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     stages = database.get_stages_by_subject(subject_id)
     print("DEBUG stages:", stages)
     keyboard = [
-        [InlineKeyboardButton(stage[1], callback_data=f"stage_{stage[0]}")]
+        [InlineKeyboardButton(stage[1], callback_data=f"cmd=stage;id={stage[0]}")]
         for stage in stages
     ]
     keyboard.append(
@@ -96,14 +98,13 @@ async def not_can_open_next_stage(update: Update, context: ContextTypes.DEFAULT_
     await query.answer()
     subject_id = context.user_data.get("subject_id")
     await query.edit_message_text(
-        """Вы не можете открыть этот этап, так как ваша средняя оценка
-            по темам предыдущего этапа ниже 80%.""",
+        "Вы не можете открыть этот этап, так как ваша средняя оценка по темам предыдущего этапа ниже 80%.", #noqa: E501
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
                         "🔙 В выбор этапа",
-                        callback_data=f"subjectforreminder_{subject_id}",
+                        callback_data=f"cmd=subjectforreminder;id={subject_id}",
                     )
                 ]
             ]
@@ -122,7 +123,7 @@ async def choose_section(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sections = database.get_sections_by_stage(stage_id)
     print(sections)
     keyboard = [
-        [InlineKeyboardButton(section[1], callback_data=f"section_{section[0]}")]
+        [InlineKeyboardButton(section[1], callback_data=f"cmd=section;id={section[0]}")]
         for section in sections
     ]
     keyboard.append(
@@ -133,7 +134,7 @@ async def choose_section(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
             InlineKeyboardButton(
                 "🔙 Назад",
-                callback_data=f"subjectforreminder_{subject_id}",
+                callback_data=f"cmd=subjectforreminder;id={subject_id}",
             ),
         ],
     )
@@ -154,7 +155,7 @@ async def choose_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     topics = database.get_topics_by_section(section_id)
     print(topics)
     keyboard = [
-        [InlineKeyboardButton(topic[1], callback_data=f"topic_{topic[0]}")]
+        [InlineKeyboardButton(topic[1], callback_data=f"cmd=topic;id={topic[0]}")]
         for topic in topics
     ]
     keyboard.append(
@@ -179,19 +180,16 @@ async def selection_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Точка входа для установки напоминания — выводит календарь
     """
-    print("DEBUG selection_date")
     query = update.callback_query
     await query.answer()
-    topic_id = int(query.data.split("_")[1])
-    print("topic----id: ", topic_id)
+    param = utils.parse_callback_data(query.data)
+    topic_id = int(param.get("id", 0))
     context.user_data["topic_id"] = topic_id
-    print("DEBUG callback_data:", context.user_data["day"])
     # Пытаемся найти соответствие между строкой в переменной data и шаблоном
-    m = re.match(r"^day_(\d+)$", context.user_data["day"], flags=re.IGNORECASE)
-    if not m:
+    if not context.user_data["day"]:
         await query.answer()
         return
-    day = int(m.group(1))
+    day = int(context.user_data["day"])
     month = context.user_data["calendar_month"]
     year = context.user_data["calendar_year"]
     selected_date = datetime(year, month, day)
