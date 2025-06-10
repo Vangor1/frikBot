@@ -1,4 +1,4 @@
-import re
+import logging
 from datetime import datetime, timedelta
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -12,6 +12,7 @@ from handlers.schedule.schedule_send import send_reminder
 REQUEST_TEXT = 1
 WAIT_DATE = 2
 
+logger = logging.getLogger(__name__)
 
 async def choose_subject_for_reminder(
     update: Update,
@@ -20,12 +21,12 @@ async def choose_subject_for_reminder(
     """
     Окно выбора предмета для изучения.
     """
-    print("DEBUG choose_subject_for_reminder")
+    logger.debug("choose_subject_for_reminder")
     query = update.callback_query
     await query.answer()
     param = utils.parse_callback_data(query.data)
     context.user_data["day"] = int(param.get("id", 0))
-    print("DEBUG ", context.user_data["day"])
+    logger.debug(f"selected day {context.user_data["day"]} ")
     chat_id = int(query.message.chat.id)
     user_subjects = database.get_user_subjects(chat_id)
     keyboard = [
@@ -53,7 +54,7 @@ async def choose_stage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     subject_id = context.user_data.get("subject_id")
     stages = database.get_stages_by_subject(subject_id)
-    print("DEBUG stages:", stages)
+    logger.debug(f"stages: {stages}")
     keyboard = [
         [InlineKeyboardButton(stage[1], callback_data=f"cmd=stage;id={stage[0]}")]
         for stage in stages
@@ -121,7 +122,7 @@ async def choose_section(update: Update, context: ContextTypes.DEFAULT_TYPE):
     stage_id = context.user_data.get("stage_id")
     subject_id = context.user_data["subject_id"]
     sections = database.get_sections_by_stage(stage_id)
-    print(sections)
+    logger.debug(f"sections: {sections}")
     keyboard = [
         [InlineKeyboardButton(section[1], callback_data=f"cmd=section;id={section[0]}")]
         for section in sections
@@ -153,7 +154,7 @@ async def choose_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     section_id = context.user_data.get("section_id")
     stage_id = context.user_data.get("stage_id")
     topics = database.get_topics_by_section(section_id)
-    print(topics)
+    logger.debug(f"topics: {topics}")
     keyboard = [
         [InlineKeyboardButton(topic[1], callback_data=f"cmd=topic;id={topic[0]}")]
         for topic in topics
@@ -202,7 +203,7 @@ async def selection_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ]
     )
-    print("DEBUG selected_date:", context.user_data["selected_date"])
+    logger.debug(f"selected_date: {context.user_data["selected_date"]}")
     await query.edit_message_text(
         f"Дата выбрана: {context.user_data['selected_date'].date()}\n"
         "Теперь введите время и текст напоминания в форме: \n"
@@ -217,7 +218,7 @@ async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     Получает текст напоминания от пользователя
     Проверяет формат
     """
-    print("DEBUG receive_text")
+    logger.debug("receive_text")
     user_text = update.message.text
     user_text = update.message.text.strip()
     markup = InlineKeyboardMarkup(
@@ -268,6 +269,9 @@ async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         stage_id,
         section_id,
         topic_id,
+    )
+    logger.info(
+        f"Создан урок {remind_id} для чата {chat_id} на {remind_date_time}"
     )
     # Вычисление задержки и планирование задачи
     delay = (remind_date_time - now).total_seconds()

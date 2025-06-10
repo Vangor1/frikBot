@@ -24,27 +24,27 @@ from handlers.profile import profile
 from handlers.schedule.selection_date import REQUEST_TEXT, receive_text, selection_date
 from handlers.schedule.schedule_send import send_reminder
 from handlers.start import start
-
+logging.basicConfig(
+    format="%(asctime)s -%(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not BOT_TOKEN:
-    print("Ошибка: переменная окружения BOT_TOKEN не установлена.")
+    logger.error("Ошибка: переменная окружения BOT_TOKEN не установлена.")
     raise SystemExit(1)
 
 if not OPENAI_API_KEY:
-    print("Ошибка: переменная окружения OPENAI_API_KEY не установлена.")
+    logger.error("Ошибка: переменная окружения OPENAI_API_KEY не установлена.")
     raise SystemExit(1)
 
 
 openai.api_key = OPENAI_API_KEY
 
 # Настройка логирования для удобства отладки и мониторинга
-logging.basicConfig(
-    format="%(asctime)s -%(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+
 
 
 # Установка доступных команд для бота (отображаются в интерфейсе Telegram)
@@ -92,6 +92,7 @@ def main():
     )
     # При старте подгружаются все отложенные задачи
     for rem_id, chat_id, remind_time, message in get_pending_reminders():
+        logger.debug(f"Восстановление напоимнания {rem_id} для чата {chat_id} на {remind_time}")
         # Вычисляется задержка до момента времени напоминание (remind_time)
         delay = (remind_time - datetime.now()).total_seconds()
         if delay < 0:
@@ -106,6 +107,7 @@ def main():
     application.add_handler(
         CallbackQueryHandler(button_callback)
     )  # Обработка нажатий на кнопки
+    logger.info("Запуск бота")
     application.run_polling()
 
 

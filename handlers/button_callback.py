@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from handlers.choose_subject import choose_subject, handle_choose_subject
 from handlers.lesson import end_lesson
-
+import logging
 from handlers.list import list_reminders
 from handlers.profile import profile
 from handlers.schedule.selection_date import (
@@ -17,6 +17,8 @@ from handlers.schedule.selection_date import (
 )
 from handlers.schedule.schedule_start import build_calendar, schedule_start
 import utils
+
+logger = logging.getLogger(__name__)
 
 async def _go_to_month(update: Update, context: ContextTypes.DEFAULT_TYPE, year: int, month:int):
     """
@@ -116,6 +118,7 @@ async def button_callback(update, context):
     query = update.callback_query
     await query.answer()
     data = query.data
+    logger.debug(f"callback_data in button_callback: {data}")
     if data == "IGNORE":
         return
     handler = DATA_HANDLERS.get(data)
