@@ -77,7 +77,6 @@ async def _stage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     params = utils.parse_callback_data(update.callback_query.data)
     stage_id = int(params.get("id", 0))
-    #stage_id = int(update.callback_query.data.split("_")[1])
     context.user_data["stage_id"] = stage_id
     if can_open_next_stage(update.callback_query.from_user.id, context):
         await choose_section(update, context)
@@ -90,7 +89,6 @@ async def _section(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     params = utils.parse_callback_data(update.callback_query.data)
     section_id = int(params.get("id", 0))
-    #section_id = int(update.callback_query.data.split("_")[1])
     context.user_data["section_id"] = section_id
     await choose_topic(update, context)
 
@@ -104,6 +102,13 @@ DATA_HANDLERS ={
     "end_lesson": end_lesson,
     "select_subject": choose_subject,
 }
+DATA_CMD_HANDLERS={
+    "day": choose_subject_for_reminder,
+    "subjectforchoose": handle_choose_subject,
+    "subjectforreminder": _subject_for_reminder,
+    "stage": _stage,
+    "section": _section,
+}
 async def button_callback(update, context):
     """
     Обработка нажатий на кнопки
@@ -111,21 +116,13 @@ async def button_callback(update, context):
     query = update.callback_query
     await query.answer()
     data = query.data
-    print("DEBUG callback_data in button callback:", data)
     if data == "IGNORE":
         return
     handler = DATA_HANDLERS.get(data)
     if handler:
         return await handler(update, context)
     params = utils.parse_callback_data(update.callback_query.data)
-    cmd = params.get("cmd")
-    if cmd =="day":
-        await choose_subject_for_reminder(update, context)
-    elif cmd=="subjectforchoose":
-        await handle_choose_subject(update, context)
-    elif cmd=="subjectforreminder":
-        await _subject_for_reminder(update, context)
-    elif cmd=="stage":
-        await _stage(update, context)
-    elif cmd == "section":
-        await _section(update, context)
+    cmdhandler = DATA_CMD_HANDLERS.get(params.get("cmd"))
+    if cmdhandler:
+        return await cmdhandler(update, context)
+    
