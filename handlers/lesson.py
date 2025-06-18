@@ -39,6 +39,8 @@ async def start_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     context.user_data["lesson_reminder_id"] = reminder_id
     context.user_data["gpt_history"] = [{"role": "system", "content": instruction}]
+    if reminder_id is not None:
+        database.delete_reminder(reminder_id)
     await update.message.reply_text(f"Начинаем урок по теме: {topic}")
 
 

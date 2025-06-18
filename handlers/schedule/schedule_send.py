@@ -1,8 +1,7 @@
 import logging
-
 from telegram.ext import ContextTypes
+from telegram import InlineKeyboardMarkup,InlineKeyboardButton
 
-from database import delete_reminder
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +20,9 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
             f"Напоминание: {message_text}\n"
             f"Чтобы пройти занятие, отправьте команду /lesson_{remind_id}"
         )
-        await context.bot.send_message(chat_id=chat_id, text=lesson_hint)
-        # Удаление записи из бд чтоб повторно не сработало
-        if remind_id is not None:
-            delete_reminder(remind_id)
+        await context.bot.send_message(chat_id=chat_id, text=lesson_hint, reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("🏠 Личный кабинет", callback_data="profile")]]
+        ),)
+                
     except Exception as e:
         logger.error(f"Ошибка {e} при отправке напоминания {message_text}")
